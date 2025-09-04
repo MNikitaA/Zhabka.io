@@ -14,13 +14,35 @@
   <canvas id="canvas" width="400" height="400"></canvas>
   <button id="send">Отправить выделение</button>
   <script>
-    // Для теста — просто белый фон, можно вставить картинку через ctx.drawImage
+    // Получаем base64 из query-параметра
+    function getQueryParam(name) {
+      let params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+    function loadImage(base64) {
+      return new Promise((resolve) => {
+        let img = new Image();
+        img.onload = () => resolve(img);
+        img.src = "data:image/jpeg;base64," + base64;
+      });
+    }
+
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    let start = null, rect = null, img = null;
 
-    let start = null, rect = null;
+    // Загружаем картинку
+    let base64 = getQueryParam('img');
+    if (base64) {
+      loadImage(base64).then((loadedImg) => {
+        img = loadedImg;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      });
+    } else {
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
     canvas.onmousedown = e => { start = {x: e.offsetX, y: e.offsetY}; };
     canvas.onmouseup = e => {
       rect = {
@@ -30,12 +52,12 @@
         height: Math.abs(start.y - e.offsetY)
       };
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (img) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       ctx.strokeStyle = "red";
       ctx.lineWidth = 2;
       ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
     };
+
     document.getElementById('send').onclick = () => {
       Telegram.WebApp.sendData(JSON.stringify(rect));
       Telegram.WebApp.close();
