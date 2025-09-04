@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Выделить область</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    canvas {border:1px solid #ccc;}
+    #send {margin-top:10px;}
+  </style>
+</head>
+<body>
+  <h3>Выделите область мышкой</h3>
+  <canvas id="canvas" width="400" height="400"></canvas>
+  <button id="send">Отправить выделение</button>
+  <script>
+    // Для теста — просто белый фон, можно вставить картинку через ctx.drawImage
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let start = null, rect = null;
+    canvas.onmousedown = e => { start = {x: e.offsetX, y: e.offsetY}; };
+    canvas.onmouseup = e => {
+      rect = {
+        x: Math.min(start.x, e.offsetX),
+        y: Math.min(start.y, e.offsetY),
+        width: Math.abs(start.x - e.offsetX),
+        height: Math.abs(start.y - e.offsetY)
+      };
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+    };
+    document.getElementById('send').onclick = () => {
+      Telegram.WebApp.sendData(JSON.stringify(rect));
+      Telegram.WebApp.close();
+    };
+  </script>
+</body>
+</html>
